@@ -1,0 +1,1730 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+<title>NVIDIA Long Straddle Simulator</title>
+ 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+ 
+<style>
+:root {
+    --bg: #f4f7fb;
+    --card: #ffffff;
+    --text: #172033;
+    --muted: #667085;
+    --border: #e4e7ec;
+    --primary: #1d4ed8;
+    --primary-soft: #eff6ff;
+    --green: #087443;
+    --green-soft: #ecfdf3;
+    --red: #b42318;
+    --red-soft: #fef3f2;
+    --amber: #b54708;
+    --amber-soft: #fffaeb;
+    --dark: #101828;
+    --shadow: 0 8px 30px rgba(16, 24, 40, 0.07);
+}
+ 
+* {
+    box-sizing: border-box;
+}
+ 
+body {
+    margin: 0;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI",
+                 Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+}
+ 
+.container {
+    width: min(1400px, 94%);
+    margin: 0 auto;
+}
+ 
+header {
+    background: linear-gradient(135deg, #111827, #1e293b);
+    color: white;
+    padding: 32px 0;
+}
+ 
+.header-inner {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+    align-items: flex-start;
+}
+ 
+.eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    font-weight: 700;
+    opacity: 0.7;
+}
+ 
+h1 {
+    margin: 5px 0 8px;
+    font-size: clamp(28px, 4vw, 42px);
+    letter-spacing: -0.03em;
+}
+ 
+.subtitle {
+    color: #d0d5dd;
+    max-width: 780px;
+}
+ 
+.event-badge {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 14px;
+    padding: 15px 18px;
+    min-width: 250px;
+}
+ 
+.event-badge strong {
+    display: block;
+    margin-bottom: 4px;
+}
+ 
+main {
+    padding: 28px 0 60px;
+}
+ 
+.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 22px;
+    margin-bottom: 22px;
+}
+ 
+.card h2 {
+    font-size: 19px;
+    margin: 0 0 5px;
+}
+ 
+.card-description {
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+ 
+.grid {
+    display: grid;
+    gap: 18px;
+}
+ 
+.inputs-grid {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+ 
+.two-col {
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.6fr);
+}
+ 
+.four-col {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+ 
+label {
+    display: block;
+    font-size: 13px;
+    font-weight: 650;
+    margin-bottom: 7px;
+}
+ 
+.tooltip {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #eaecf0;
+    color: #475467;
+    font-size: 10px;
+    cursor: help;
+    margin-left: 4px;
+}
+ 
+input[type="number"] {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #d0d5dd;
+    border-radius: 9px;
+    font-size: 15px;
+    outline: none;
+    transition: 0.15s;
+}
+ 
+input[type="number"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(29,78,216,0.1);
+}
+ 
+.input-note {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 5px;
+}
+ 
+.slider-section {
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 18px;
+}
+ 
+.slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+ 
+.slider-value {
+    font-size: 25px;
+    font-weight: 750;
+    color: var(--primary);
+}
+ 
+input[type="range"] {
+    width: 100%;
+    accent-color: var(--primary);
+    margin: 16px 0 5px;
+}
+ 
+.range-labels {
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 11px;
+}
+ 
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+}
+ 
+.kpi {
+    padding: 17px;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: #fff;
+}
+ 
+.kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+ 
+.kpi-value {
+    font-size: 22px;
+    font-weight: 750;
+}
+ 
+.kpi-value.green {
+    color: var(--green);
+}
+ 
+.kpi-value.red {
+    color: var(--red);
+}
+ 
+.kpi-value.blue {
+    color: var(--primary);
+}
+ 
+.kpi-value.amber {
+    color: var(--amber);
+}
+ 
+.chart-wrap {
+    position: relative;
+    height: 500px;
+}
+ 
+.table-wrap {
+    overflow-x: auto;
+}
+ 
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+ 
+th, td {
+    padding: 12px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: right;
+}
+ 
+th:first-child,
+td:first-child {
+    text-align: left;
+}
+ 
+th {
+    color: var(--muted);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+ 
+.profit {
+    color: var(--green);
+    font-weight: 700;
+}
+ 
+.loss {
+    color: var(--red);
+    font-weight: 700;
+}
+ 
+.neutral {
+    color: var(--muted);
+}
+ 
+.status-box {
+    border-radius: 13px;
+    padding: 17px;
+    margin-top: 16px;
+}
+ 
+.status-box.profit {
+    background: var(--green-soft);
+    color: var(--green);
+}
+ 
+.status-box.loss {
+    background: var(--red-soft);
+    color: var(--red);
+}
+ 
+.status-box.neutral {
+    background: #f2f4f7;
+}
+ 
+.status-box strong {
+    display: block;
+    margin-bottom: 3px;
+}
+ 
+.scenario-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 10px;
+}
+ 
+button {
+    border: 1px solid var(--border);
+    background: white;
+    color: var(--text);
+    padding: 11px 13px;
+    border-radius: 9px;
+    cursor: pointer;
+    font-weight: 650;
+    transition: 0.15s;
+}
+ 
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16,24,40,0.08);
+}
+ 
+button.primary {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+ 
+button.danger {
+    color: var(--red);
+}
+ 
+button.success {
+    color: var(--green);
+}
+ 
+.iv-display {
+    font-size: 30px;
+    font-weight: 800;
+    color: var(--primary);
+}
+ 
+.assumption {
+    border-left: 4px solid var(--primary);
+    background: var(--primary-soft);
+    padding: 14px 16px;
+    border-radius: 0 10px 10px 0;
+    color: #344054;
+    font-size: 13px;
+}
+ 
+.educational {
+    background: #101828;
+    color: white;
+    border-radius: 16px;
+    padding: 24px;
+}
+ 
+.educational p {
+    color: #d0d5dd;
+}
+ 
+.formula {
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+    font-size: 13px;
+    overflow-x: auto;
+}
+ 
+.definition-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+}
+ 
+.definition {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 15px;
+}
+ 
+.definition strong {
+    display: block;
+    margin-bottom: 5px;
+}
+ 
+.definition p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+ 
+footer {
+    text-align: center;
+    color: var(--muted);
+    font-size: 12px;
+    padding: 10px 0 30px;
+}
+ 
+@media (max-width: 850px) {
+    .two-col {
+        grid-template-columns: 1fr;
+    }
+ 
+    .header-inner {
+        flex-direction: column;
+    }
+ 
+    .event-badge {
+        width: 100%;
+    }
+ 
+    .chart-wrap {
+        height: 400px;
+    }
+}
+</style>
+</head>
+ 
+<body>
+ 
+<header>
+<div class="container header-inner">
+    <div>
+        <div class="eyebrow">Derivatives Project • Theme 2</div>
+        <h1>NVIDIA Long Straddle Simulator</h1>
+        <div class="subtitle">
+            Trading volatility using option combinations — interactive analysis
+            of a long call and long put with the same strike and expiration.
+        </div>
+    </div>
+ 
+    <div class="event-badge">
+        <strong>NVDA • NVIDIA Corporation</strong>
+        Earnings event: <span id="eventDate">17 November 2026</span><br>
+        Option expiration: <span id="expiryDate">20 November 2026</span>
+    </div>
+</div>
+</header>
+ 
+<main>
+<div class="container">
+ 
+    <!-- EDUCATIONAL INTRO -->
+    <section class="educational">
+        <div class="eyebrow">Strategy overview</div>
+        <h2>Long Straddle</h2>
+        <p>
+            A long straddle consists of buying a call and a put with the same
+            strike price and expiration date. The strategy benefits from a
+            sufficiently large movement in either direction, but the investor
+            risks losing the premium paid if the stock remains close to the
+            strike.
+        </p>
+    </section>
+ 
+    <!-- INPUTS -->
+    <section class="card">
+        <h2>1. Strategy Inputs</h2>
+        <div class="card-description">
+            Edit the assumptions below. All expiration payoff calculations
+            update automatically.
+        </div>
+ 
+        <div class="grid inputs-grid">
+ 
+            <div>
+                <label>
+                    Current NVIDIA stock price
+                    <span class="tooltip" title="Reference stock price used by the simulator.">?</span>
+                </label>
+                <input id="stockPrice" type="number" value="230.36" step="0.01" min="0">
+                <div class="input-note">USD per share</div>
+            </div>
+ 
+            <div>
+                <label>
+                    Call strike
+                    <span class="tooltip" title="Strike price of the long call.">?</span>
+                </label>
+                <input id="callStrike" type="number" value="230.00" step="0.01" min="0">
+                <div class="input-note">USD per share</div>
+            </div>
+ 
+            <div>
+                <label>
+                    Put strike
+                    <span class="tooltip" title="Strike price of the long put.">?</span>
+                </label>
+                <input id="putStrike" type="number" value="230.00" step="0.01" min="0">
+                <div class="input-note">USD per share</div>
+            </div>
+ 
+            <div>
+                <label>
+                    Call premium
+                    <span class="tooltip" title="Premium paid for one call option share.">?</span>
+                </label>
+                <input id="callPremium" type="number" value="17.40" step="0.01" min="0">
+                <div class="input-note">USD per share</div>
+            </div>
+ 
+            <div>
+                <label>
+                    Put premium
+                    <span class="tooltip" title="Premium paid for one put option share.">?</span>
+                </label>
+                <input id="putPremium" type="number" value="15.30" step="0.01" min="0">
+                <div class="input-note">USD per share</div>
+            </div>
+ 
+            <div>
+                <label>
+                    Number of contracts
+                    <span class="tooltip" title="One standard option contract represents 100 shares.">?</span>
+                </label>
+                <input id="contracts" type="number" value="1" step="1" min="1">
+                <div class="input-note">Standard contracts</div>
+            </div>
+ 
+        </div>
+    </section>
+ 
+    <!-- SUMMARY -->
+    <section class="card">
+        <h2>Strategy Summary</h2>
+        <div class="kpi-grid">
+ 
+            <div class="kpi">
+                <div class="kpi-label">Total premium</div>
+                <div class="kpi-value blue" id="totalPremium">$32.70</div>
+                <div class="input-note">per share</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Lower breakeven</div>
+                <div class="kpi-value" id="lowerBE">$197.30</div>
+                <div class="input-note">at expiration</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Upper breakeven</div>
+                <div class="kpi-value" id="upperBE">$262.70</div>
+                <div class="input-note">at expiration</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Maximum loss</div>
+                <div class="kpi-value red" id="maxLoss">$32.70</div>
+                <div class="input-note">per share</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Maximum loss</div>
+                <div class="kpi-value red" id="maxLossContract">$3,270.00</div>
+                <div class="input-note">per standard contract</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Maximum upside profit</div>
+                <div class="kpi-value green">Unlimited</div>
+                <div class="input-note">theoretical</div>
+            </div>
+ 
+        </div>
+ 
+        <div class="status-box neutral" id="positionStatus">
+            <strong>At-the-money reference</strong>
+            Move the expiration price slider to examine the strategy payoff.
+        </div>
+    </section>
+ 
+    <!-- FUTURE PRICE -->
+    <section class="card">
+        <h2>2. Future NVIDIA Stock Price</h2>
+        <div class="card-description">
+            Select NVIDIA's stock price at expiration. The payoff and graph
+            update automatically.
+        </div>
+ 
+        <div class="slider-section">
+            <div class="slider-header">
+                <div>
+                    <strong>Stock price at expiration</strong>
+                    <div class="input-note">Range: $100–$350 • Step: $1</div>
+                </div>
+                <div class="slider-value" id="futurePriceDisplay">$230</div>
+            </div>
+ 
+            <input
+                id="futurePrice"
+                type="range"
+                min="100"
+                max="350"
+                step="1"
+                value="230"
+            >
+ 
+            <div class="range-labels">
+                <span>$100</span>
+                <span>$150</span>
+                <span>$200</span>
+                <span>$250</span>
+                <span>$300</span>
+                <span>$350</span>
+            </div>
+        </div>
+ 
+        <br>
+ 
+        <div class="kpi-grid">
+ 
+            <div class="kpi">
+                <div class="kpi-label">Call payoff</div>
+                <div class="kpi-value" id="callPayoff">$0.00</div>
+                <div class="input-note">max(Sₜ − Kcall, 0)</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Put payoff</div>
+                <div class="kpi-value" id="putPayoff">$0.00</div>
+                <div class="input-note">max(Kput − Sₜ, 0)</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Straddle P/L</div>
+                <div class="kpi-value" id="straddlePL">$-32.70</div>
+                <div class="input-note">per share</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Position P/L</div>
+                <div class="kpi-value" id="positionPL">$-3,270.00</div>
+                <div class="input-note">contracts × 100 shares</div>
+            </div>
+ 
+        </div>
+    </section>
+ 
+    <!-- GRAPH -->
+    <section class="card">
+        <h2>3. Expiration Payoff Graph</h2>
+        <div class="card-description">
+            This graph shows the expiration payoff of the call, put and
+            combined long straddle. Premiums are subtracted from the combined
+            position.
+        </div>
+ 
+        <div class="chart-wrap">
+            <canvas id="payoffChart"></canvas>
+        </div>
+    </section>
+ 
+    <!-- SCENARIO TABLE -->
+    <section class="card">
+        <h2>4. Scenario Analysis</h2>
+        <div class="card-description">
+            Long-straddle profit/loss at selected NVIDIA expiration prices.
+        </div>
+ 
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Expiration price</th>
+                        <th>Call payoff</th>
+                        <th>Put payoff</th>
+                        <th>Gross payoff</th>
+                        <th>Total premium</th>
+                        <th>Straddle P/L</th>
+                    </tr>
+                </thead>
+                <tbody id="scenarioBody"></tbody>
+            </table>
+        </div>
+    </section>
+ 
+    <!-- VOLATILITY SIMULATOR -->
+    <section class="card">
+        <h2>5. Implied Volatility Simulation</h2>
+ 
+        <div class="card-description">
+            Theoretical option values before expiration are estimated using a
+            Black-Scholes model. This is separate from the expiration payoff.
+        </div>
+ 
+        <div class="assumption">
+            <strong>Model assumptions:</strong>
+            Initial IV is an illustrative 50% input because no observed IV was
+            supplied. Risk-free rate is initially 0% because no rate was
+            supplied. These are modelling assumptions, not claimed NVIDIA
+            market statistics. Dividend yield is assumed to be 0%.
+        </div>
+ 
+        <br>
+ 
+        <div class="grid two-col">
+ 
+            <div class="slider-section">
+                <div class="slider-header">
+                    <div>
+                        <strong>Implied volatility</strong>
+                        <div class="input-note">
+                            Editable model input
+                        </div>
+                    </div>
+                    <div class="iv-display" id="ivDisplay">50.0%</div>
+                </div>
+ 
+                <input
+                    id="ivSlider"
+                    type="range"
+                    min="5"
+                    max="150"
+                    step="0.5"
+                    value="50"
+                >
+ 
+                <div class="range-labels">
+                    <span>5%</span>
+                    <span>50%</span>
+                    <span>100%</span>
+                    <span>150%</span>
+                </div>
+ 
+                <br>
+ 
+                <label>
+                    Risk-free rate
+                    <span class="tooltip"
+                          title="Model input used by Black-Scholes. It is not presented as a current market statistic.">
+                        ?
+                    </span>
+                </label>
+ 
+                <input
+                    id="riskFree"
+                    type="number"
+                    value="0"
+                    step="0.01"
+                >
+ 
+                <div class="input-note">
+                    Percent per annum. Initial assumption = 0%.
+                </div>
+            </div>
+ 
+            <div>
+                <div class="kpi-grid">
+ 
+                    <div class="kpi">
+                        <div class="kpi-label">Theoretical call value</div>
+                        <div class="kpi-value blue" id="theoreticalCall">
+                            $17.40
+                        </div>
+                    </div>
+ 
+                    <div class="kpi">
+                        <div class="kpi-label">Theoretical put value</div>
+                        <div class="kpi-value blue" id="theoreticalPut">
+                            $15.30
+                        </div>
+                    </div>
+ 
+                    <div class="kpi">
+                        <div class="kpi-label">Theoretical straddle value</div>
+                        <div class="kpi-value blue" id="theoreticalStraddle">
+                            $32.70
+                        </div>
+                    </div>
+ 
+                    <div class="kpi">
+                        <div class="kpi-label">Model time to expiry</div>
+                        <div class="kpi-value" id="timeToExpiry">
+                            73 days
+                        </div>
+                    </div>
+ 
+                </div>
+            </div>
+        </div>
+ 
+        <br>
+ 
+        <h3>Volatility scenarios</h3>
+ 
+        <div class="scenario-buttons">
+            <button class="success" onclick="changeIV(-5)">
+                Slight volatility decrease
+            </button>
+ 
+            <button class="success" onclick="changeIV(-15)">
+                Substantial volatility decrease
+            </button>
+ 
+            <button class="primary" onclick="changeIV(5)">
+                Slight volatility increase
+            </button>
+ 
+            <button class="primary" onclick="changeIV(15)">
+                Substantial volatility increase
+            </button>
+ 
+            <button class="danger" onclick="ivCrush()">
+                IV Crush — post earnings
+            </button>
+        </div>
+ 
+        <br>
+ 
+        <div class="kpi-grid">
+ 
+            <div class="kpi">
+                <div class="kpi-label">Call value change</div>
+                <div class="kpi-value" id="callValueChange">—</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Put value change</div>
+                <div class="kpi-value" id="putValueChange">—</div>
+            </div>
+ 
+            <div class="kpi">
+                <div class="kpi-label">Straddle value change</div>
+                <div class="kpi-value" id="straddleValueChange">—</div>
+            </div>
+ 
+        </div>
+    </section>
+ 
+    <!-- IV CRUSH -->
+    <section class="card">
+        <h2>6. IV Crush Demonstration</h2>
+ 
+        <div class="card-description">
+            Earnings events can cause implied volatility to fall sharply after
+            the uncertainty surrounding the event is resolved.
+        </div>
+ 
+        <div class="grid two-col">
+ 
+            <div class="status-box loss">
+                <strong>Key concept</strong>
+                A long straddle can lose value after an earnings announcement
+                if implied volatility falls substantially and the realised
+                stock-price movement is not large enough to compensate for the
+                volatility repricing and time decay.
+            </div>
+ 
+            <div class="formula">
+                Before expiration:
+                <br><br>
+                Option value ≠ expiration payoff
+                <br><br>
+                Option value reflects factors such as:
+                <br>
+                • stock price
+                <br>
+                • strike
+                <br>
+                • time to expiration
+                <br>
+                • implied volatility
+                <br>
+                • interest rate
+                <br><br>
+                At expiration:
+                <br><br>
+                Value = intrinsic payoff
+            </div>
+ 
+        </div>
+    </section>
+ 
+    <!-- GREEKS -->
+    <section class="card">
+        <h2>7. Volatility & Option Greeks</h2>
+ 
+        <div class="definition-grid">
+ 
+            <div class="definition">
+                <strong>Implied volatility (IV)</strong>
+                <p>
+                    The volatility level embedded in an option's market price.
+                    It represents the market's forward-looking volatility
+                    expectation under the pricing framework.
+                </p>
+            </div>
+ 
+            <div class="definition">
+                <strong>Realised volatility</strong>
+                <p>
+                    The volatility actually observed in the underlying stock
+                    over a period. A high IV does not guarantee that realised
+                    volatility will be high enough to make a straddle profitable.
+                </p>
+            </div>
+ 
+            <div class="definition">
+                <strong>Vega</strong>
+                <p>
+                    Measures the sensitivity of an option's theoretical value
+                    to a change in implied volatility. A long straddle is
+                    generally long vega, so higher IV tends to increase the
+                    theoretical value of both long options, all else equal.
+                </p>
+            </div>
+ 
+            <div class="definition">
+                <strong>Theta</strong>
+                <p>
+                    Measures sensitivity to the passage of time. Long options
+                    generally have negative theta, meaning time decay tends to
+                    reduce their value when other factors are unchanged.
+                </p>
+            </div>
+ 
+            <div class="definition">
+                <strong>Gamma</strong>
+                <p>
+                    Measures the rate at which delta changes as the stock price
+                    changes. A long straddle is generally long gamma, meaning
+                    large stock-price movements can materially change the
+                    position's delta exposure.
+                </p>
+            </div>
+ 
+            <div class="definition">
+                <strong>Expiration payoff</strong>
+                <p>
+                    At expiration there is no remaining time value. The call
+                    and put values become their intrinsic payoffs, after which
+                    the premiums paid are subtracted to determine strategy P/L.
+                </p>
+            </div>
+ 
+        </div>
+    </section>
+ 
+    <!-- FORMULAS -->
+    <section class="card">
+        <h2>8. Strategy Formula Audit</h2>
+ 
+        <div class="formula">
+            Call payoff = max(Sₜ − Kcall, 0)
+            <br><br>
+            Put payoff = max(Kput − Sₜ, 0)
+            <br><br>
+            Long Straddle P/L =
+            Call payoff + Put payoff − Call premium − Put premium
+            <br><br>
+            Total premium = Call premium + Put premium
+            <br><br>
+            Lower breakeven = Strike − Total premium
+            <br><br>
+            Upper breakeven = Strike + Total premium
+            <br><br>
+            Maximum loss = Total premium
+            <br><br>
+            Maximum loss per standard contract =
+            Total premium × 100
+        </div>
+ 
+        <br>
+ 
+        <div class="assumption">
+            <strong>Maximum profit:</strong>
+            Upside profit is unlimited because the call has unlimited upside
+            potential. Downside profit is limited because NVIDIA's stock price
+            cannot fall below zero.
+        </div>
+    </section>
+ 
+    <footer>
+        Academic derivatives simulator • NVIDIA Corporation (NASDAQ: NVDA) •
+        Educational use only • No investment recommendation
+    </footer>
+ 
+</div>
+</main>
+ 
+<script>
+/* ============================================================
+   NVIDIA LONG STRADDLE SIMULATOR
+   ============================================================ */
+ 
+/* ---------- Utility functions ---------- */
+ 
+function getNumber(id) {
+    const value = parseFloat(document.getElementById(id).value);
+    return Number.isFinite(value) ? value : 0;
+}
+ 
+function money(value) {
+    const sign = value < 0 ? "-" : "";
+    return sign + "$" + Math.abs(value).toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
+}
+ 
+function pct(value) {
+    return value.toFixed(1) + "%";
+}
+ 
+/* ---------- Core strategy calculations ---------- */
+ 
+function getInputs() {
+    return {
+        S: getNumber("stockPrice"),
+        Kcall: getNumber("callStrike"),
+        Kput: getNumber("putStrike"),
+        callPremium: getNumber("callPremium"),
+        putPremium: getNumber("putPremium"),
+        contracts: Math.max(1, Math.round(getNumber("contracts")))
+    };
+}
+ 
+function totalPremium() {
+    const i = getInputs();
+    return i.callPremium + i.putPremium;
+}
+ 
+function callPayoff(ST, K) {
+    return Math.max(ST - K, 0);
+}
+ 
+function putPayoff(ST, K) {
+    return Math.max(K - ST, 0);
+}
+ 
+function straddlePL(ST) {
+    const i = getInputs();
+ 
+    return (
+        callPayoff(ST, i.Kcall) +
+        putPayoff(ST, i.Kput) -
+        i.callPremium -
+        i.putPremium
+    );
+}
+ 
+/* ---------- Summary ---------- */
+ 
+function updateSummary() {
+    const i = getInputs();
+ 
+    const premium = i.callPremium + i.putPremium;
+ 
+    /*
+       The standard breakeven formula assumes the call and put
+       have the same strike, which is the case for this straddle.
+    */
+    const strike = (i.Kcall + i.Kput) / 2;
+ 
+    const lower = strike - premium;
+    const upper = strike + premium;
+ 
+    document.getElementById("totalPremium").textContent = money(premium);
+    document.getElementById("lowerBE").textContent = money(lower);
+    document.getElementById("upperBE").textContent = money(upper);
+ 
+    document.getElementById("maxLoss").textContent = money(premium);
+ 
+    const contractLoss = premium * 100;
+    document.getElementById("maxLossContract").textContent =
+        money(contractLoss);
+}
+ 
+/* ---------- Future price ---------- */
+ 
+function updateFuturePrice() {
+    const i = getInputs();
+    const ST = getNumber("futurePrice");
+ 
+    const cPay = callPayoff(ST, i.Kcall);
+    const pPay = putPayoff(ST, i.Kput);
+    const pl = straddlePL(ST);
+    const positionPL = pl * 100 * i.contracts;
+ 
+    document.getElementById("futurePriceDisplay").textContent =
+        money(ST).replace(".00", "");
+ 
+    document.getElementById("callPayoff").textContent = money(cPay);
+    document.getElementById("putPayoff").textContent = money(pPay);
+ 
+    const plElement = document.getElementById("straddlePL");
+    plElement.textContent = money(pl);
+    plElement.className =
+        "kpi-value " + (pl > 0 ? "green" : pl < 0 ? "red" : "");
+ 
+    const positionElement = document.getElementById("positionPL");
+    positionElement.textContent = money(positionPL);
+    positionElement.className =
+        "kpi-value " +
+        (positionPL > 0 ? "green" : positionPL < 0 ? "red" : "");
+ 
+    updatePositionStatus(ST, pl);
+}
+ 
+function updatePositionStatus(ST, pl) {
+    const i = getInputs();
+    const premium = i.callPremium + i.putPremium;
+    const strike = (i.Kcall + i.Kput) / 2;
+ 
+    const box = document.getElementById("positionStatus");
+ 
+    if (Math.abs(ST - strike) < 0.0001) {
+        box.className = "status-box neutral";
+        box.innerHTML =
+            "<strong>Maximum-loss point</strong>" +
+            "At the strike price, both options have zero intrinsic payoff. " +
+            "The investor loses the full premium paid: " +
+            money(premium) + " per share.";
+    }
+    else if (pl > 0) {
+        box.className = "status-box profit";
+        box.innerHTML =
+            "<strong>Profitable at expiration</strong>" +
+            "The selected expiration price is beyond a breakeven point. " +
+            "The large stock-price movement has generated enough intrinsic " +
+            "value to exceed the premium paid.";
+    }
+    else if (pl < 0) {
+        box.className = "status-box loss";
+        box.innerHTML =
+            "<strong>Loss at expiration</strong>" +
+            "The stock has not moved far enough from the strike to recover " +
+            "the total premium paid.";
+    }
+    else {
+        box.className = "status-box neutral";
+        box.innerHTML =
+            "<strong>Breakeven</strong>" +
+            "At this expiration price, the intrinsic payoff exactly offsets " +
+            "the premium paid.";
+    }
+}
+ 
+/* ---------- Payoff chart ---------- */
+ 
+let payoffChart;
+ 
+function updateChart() {
+    const i = getInputs();
+ 
+    const lower = ((i.Kcall + i.Kput) / 2) -
+                  (i.callPremium + i.putPremium);
+ 
+    const upper = ((i.Kcall + i.Kput) / 2) +
+                  (i.callPremium + i.putPremium);
+ 
+    const current = i.S;
+ 
+    const labels = [];
+    const callData = [];
+    const putData = [];
+    const straddleData = [];
+ 
+    for (let ST = 100; ST <= 350; ST += 1) {
+        labels.push(ST);
+ 
+        const c = callPayoff(ST, i.Kcall);
+        const p = putPayoff(ST, i.Kput);
+ 
+        callData.push(c - i.callPremium);
+        putData.push(p - i.putPremium);
+        straddleData.push(c + p - i.callPremium - i.putPremium);
+    }
+ 
+    const datasets = [
+        {
+            label: "Long Call P/L",
+            data: callData,
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0
+        },
+        {
+            label: "Long Put P/L",
+            data: putData,
+            borderWidth: 2,
+            pointRadius: 0,
+            tension: 0
+        },
+        {
+            label: "Combined Long Straddle P/L",
+            data: straddleData,
+            borderWidth: 4,
+            pointRadius: 0,
+            tension: 0
+        }
+    ];
+ 
+    /*
+       Add horizontal zero line.
+    */
+    datasets.push({
+        label: "Zero Profit",
+        data: labels.map(() => 0),
+        borderWidth: 1.5,
+        borderDash: [6, 6],
+        pointRadius: 0
+    });
+ 
+    /*
+       Add strike line.
+    */
+    datasets.push({
+        label: "Strike = $" + ((i.Kcall + i.Kput) / 2).toFixed(2),
+        data: labels.map(x =>
+            Math.abs(x - ((i.Kcall + i.Kput) / 2)) < 0.01
+                ? null
+                : NaN
+        ),
+        borderWidth: 0
+    });
+ 
+    if (payoffChart) {
+        payoffChart.destroy();
+    }
+ 
+    payoffChart = new Chart(
+        document.getElementById("payoffChart"),
+        {
+            type: "line",
+            data: {
+                labels,
+                datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: "index",
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: "bottom"
+                    },
+                    tooltip: {
+                        callbacks: {
+                            title: function(items) {
+                                return "Expiration price: $" +
+                                    items[0].label;
+                            },
+                            label: function(context) {
+                                return context.dataset.label + ": $" +
+                                    Number(context.raw || 0).toFixed(2);
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: "NVIDIA stock price at expiration (USD)"
+                        },
+                        min: 100,
+                        max: 350
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: "Profit / Loss per share (USD)"
+                        }
+                    }
+                }
+            },
+            plugins: [{
+                id: "straddleAnnotations",
+                afterDraw(chart) {
+                    const ctx = chart.ctx;
+                    const xScale = chart.scales.x;
+                    const yScale = chart.scales.y;
+ 
+                    function drawVerticalLine(xValue, text) {
+                        const x = xScale.getPixelForValue(xValue);
+ 
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.moveTo(x, yScale.top);
+                        ctx.lineTo(x, yScale.bottom);
+                        ctx.setLineDash([5, 5]);
+                        ctx.lineWidth = 1.5;
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+ 
+                        ctx.fillStyle = "#475467";
+                        ctx.font = "12px Arial";
+                        ctx.textAlign = "center";
+                        ctx.fillText(
+                            text,
+                            x,
+                            yScale.top + 15
+                        );
+ 
+                        ctx.restore();
+                    }
+ 
+                    drawVerticalLine(
+                        lower,
+                        "Lower BE $" + lower.toFixed(2)
+                    );
+ 
+                    drawVerticalLine(
+                        ((i.Kcall + i.Kput) / 2),
+                        "Strike $" +
+                        ((i.Kcall + i.Kput) / 2).toFixed(2)
+                    );
+ 
+                    drawVerticalLine(
+                        upper,
+                        "Upper BE $" + upper.toFixed(2)
+                    );
+ 
+                    drawVerticalLine(
+                        current,
+                        "Current $" + current.toFixed(2)
+                    );
+ 
+                    const selected =
+                        getNumber("futurePrice");
+ 
+                    drawVerticalLine(
+                        selected,
+                        "Selected $" + selected.toFixed(0)
+                    );
+                }
+            }]
+        }
+    );
+}
+ 
+/* ---------- Scenario table ---------- */
+ 
+function updateScenarioTable() {
+    const i = getInputs();
+ 
+    const prices = [
+        170,
+        200,
+        230,
+        250,
+        270,
+        300
+    ];
+ 
+    const body = document.getElementById("scenarioBody");
+ 
+    body.innerHTML = "";
+ 
+    prices.forEach(ST => {
+        const c = callPayoff(ST, i.Kcall);
+        const p = putPayoff(ST, i.Kput);
+        const gross = c + p;
+        const pl = gross - i.callPremium - i.putPremium;
+ 
+        const row = document.createElement("tr");
+ 
+        row.innerHTML = `
+            <td><strong>$${ST.toFixed(2)}</strong></td>
+            <td>${money(c)}</td>
+            <td>${money(p)}</td>
+            <td>${money(gross)}</td>
+            <td>${money(i.callPremium + i.putPremium)}</td>
+            <td class="${pl > 0 ? "profit" : pl < 0 ? "loss" : "neutral"}">
+                ${money(pl)}
+            </td>
+        `;
+ 
+        body.appendChild(row);
+    });
+}
+ 
+/* ============================================================
+   BLACK-SCHOLES MODEL
+   Used ONLY for theoretical pre-expiration option values.
+   It is deliberately separated from expiration payoff.
+   ============================================================ */
+ 
+function normalCDF(x) {
+    return 0.5 * (
+        1 + erf(x / Math.sqrt(2))
+    );
+}
+ 
+function erf(x) {
+    const sign = x >= 0 ? 1 : -1;
+    x = Math.abs(x);
+ 
+    const a1 = 0.254829592;
+    const a2 = -0.284496736;
+    const a3 = 1.421413741;
+    const a4 = -1.453152027;
+    const a5 = 1.061405429;
+    const p = 0.3275911;
+ 
+    const t = 1 / (1 + p * x);
+ 
+    const y = 1 - (
+        (
+            (
+                (
+                    (a5 * t + a4) * t
+                    + a3
+                ) * t + a2
+            ) * t + a1
+        ) * t
+    ) * Math.exp(-x * x);
+ 
+    return sign * y;
+}
+ 
+function blackScholes(S, K, r, sigma, T, type) {
+ 
+    if (T <= 0) {
+        if (type === "call") {
+            return Math.max(S - K, 0);
+        }
+ 
+        return Math.max(K - S, 0);
+    }
+ 
+    if (sigma <= 0) {
+        if (type === "call") {
+            return Math.max(
+                S - K * Math.exp(-r * T),
+                0
+            );
+        }
+ 
+        return Math.max(
+            K * Math.exp(-r * T) - S,
+            0
+        );
+    }
+ 
+    const d1 =
+        (
+            Math.log(S / K) +
+            (r + 0.5 * sigma * sigma) * T
+        ) /
+        (sigma * Math.sqrt(T));
+ 
+    const d2 =
+        d1 - sigma * Math.sqrt(T);
+ 
+    if (type === "call") {
+ 
+        return (
+            S * normalCDF(d1) -
+            K * Math.exp(-r * T) * normalCDF(d2)
+        );
+ 
+    } else {
+ 
+        return (
+            K * Math.exp(-r * T) * normalCDF(-d2) -
+            S * normalCDF(-d1)
+        );
+ 
+    }
+}
+ 
+/* ---------- Time to expiration ---------- */
+ 
+function calculateTimeToExpiry() {
+ 
+    /*
+       Project date:
+       8 September 2026
+       Expiration:
+       20 November 2026
+ 
+       This is deliberately based on the project dates rather than
+       claiming a live market timestamp.
+    */
+ 
+    const start = new Date("2026-09-08T00:00:00");
+    const expiry = new Date("2026-11-20T00:00:00");
+ 
+    const milliseconds =
+        expiry.getTime() - start.getTime();
+ 
+    const days =
+        milliseconds / (1000 * 60 * 60 * 24);
+ 
+    return days;
+}
+ 
+/* ---------- Theoretical values ---------- */
+ 
+function calculateTheoreticalValues() {
+ 
+    const i = getInputs();
+ 
+    const iv =
+        getNumber("ivSlider") / 100;
+ 
+    const r =
+        getNumber("riskFree") / 100;
+ 
+    const days = calculateTimeToExpiry();
+ 
+    const T = days / 365;
+ 
+    const callValue = blackScholes(
+        i.S,
+        i.Kcall,
+        r,
+        iv,
+        T,
+        "call"
+    );
+ 
+    const putValue = blackScholes(
+        i.S,
+        i.Kput,
+        r,
+        iv,
+        T,
+        "put"
+    );
+ 
+    return {
+        call: callValue,
+        put: putValue,
+        straddle: callValue + putValue
+    };
+}
+ 
+let previousTheoretical = null;
+ 
+function updateTheoreticalValues() {
+ 
+    const values = calculateTheoreticalValues();
+ 
+    const iv = getNumber("ivSlider");
+ 
+    document.getElementById("ivDisplay").textContent =
+        pct(iv);
+ 
+    document.getElementById("theoreticalCall").textContent =
+        money(values.call);
+ 
+    document.getElementById("theoreticalPut").textContent =
+        money(values.put);
+ 
+    document.getElementById("theoreticalStraddle").textContent =
+        money(values.straddle);
+ 
+    const days = calculateTimeToExpiry();
+ 
+    document.getElementById("timeToExpiry").textContent =
+        Math.round(days) + " days";
+ 
+    if (previousTheoretical !== null) {
+ 
+        const callChange =
+            values.call - previousTheoretical.call;
+ 
+        const putChange =
+            values.put - previousTheoretical.put;
+ 
+        const straddleChange =
+            values.straddle - previousTheoretical.straddle;
+ 
+        document.getElementById("callValueChange").textContent =
+            money(callChange);
+ 
+        document.getElementById("putValueChange").textContent =
+            money(putChange);
+ 
+        document.getElementById("straddleValueChange").textContent =
+            money(straddleChange);
+ 
+        document.getElementById("callValueChange").className =
+            "kpi-value " +
+            (callChange > 0 ? "green" :
+             callChange < 0 ? "red" : "");
+ 
+        document.getElementById("putValueChange").className =
+            "kpi-value " +
+            (putChange > 0 ? "green" :
+             putChange < 0 ? "red" : "");
+ 
+        document.getElementById("straddleValueChange").className =
+            "kpi-value " +
+            (straddleChange > 0 ? "green" :
+             straddleChange < 0 ? "red" : "");
+    }
+ 
+    previousTheoretical = values;
+}
+ 
+/* ---------- IV scenario buttons ---------- */
+ 
+function changeIV(amount) {
+ 
+    const slider = document.getElementById("ivSlider");
+ 
+    let newValue =
+        parseFloat(slider.value) + amount;
+ 
+    newValue =
+        Math.max(
+            parseFloat(slider.min),
+            Math.min(
+                parseFloat(slider.max),
+                newValue
+            )
+        );
+ 
+    slider.value = newValue;
+ 
+    updateTheoreticalValues();
+}
+ 
+function ivCrush() {
+ 
+    /*
+       This is an illustrative IV-crush scenario.
+       It does NOT represent an observed NVDA post-earnings IV.
+    */
+ 
+    document.getElementById("ivSlider").value = 20;
+ 
+    updateTheoreticalValues();
+ 
+    document.getElementById("callValueChange").textContent =
+        "Illustrative crush";
+ 
+    document.getElementById("putValueChange").textContent =
+        "IV → 20%";
+ 
+    document.getElementById("straddleValueChange").textContent =
+        "Repriced lower";
+ 
+    document.getElementById("callValueChange").className =
+        "kpi-value red";
+ 
+    document.getElementById("putValueChange").className =
+        "kpi-value red";
+ 
+    document.getElementById("straddleValueChange").className =
+        "kpi-value red";
+}
+ 
+/* ---------- Master update ---------- */
+ 
+function updateAll() {
+ 
+    updateSummary();
+    updateFuturePrice();
+    updateScenarioTable();
+    updateChart();
+    updateTheoreticalValues();
+}
+ 
+/* ---------- Event listeners ---------- */
+ 
+document
+    .getElementById("futurePrice")
+    .addEventListener("input", updateFuturePrice);
+ 
+document
+    .getElementById("ivSlider")
+    .addEventListener("input", updateTheoreticalValues);
+ 
+document
+    .getElementById("riskFree")
+    .addEventListener("input", updateTheoreticalValues);
+ 
+[
+    "stockPrice",
+    "callStrike",
+    "putStrike",
+    "callPremium",
+    "putPremium",
+    "contracts"
+].forEach(id => {
+ 
+    document
+        .getElementById(id)
+        .addEventListener("input", () => {
+ 
+            updateSummary();
+            updateFuturePrice();
+            updateScenarioTable();
+            updateChart();
+ 
+        });
+ 
+});
+ 
+/* ---------- Initial render ---------- */
+ 
+updateAll();
+ 
+</script>
+ 
+</body>
+</html>
+```
